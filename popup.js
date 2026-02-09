@@ -1,50 +1,85 @@
-const button = document.getElementById("readAttendance");
-const tableBody = document.querySelector("#attendanceTable tbody");
-const message = document.getElementById("message");
+let latestData = []; // store latest attendance data
 
-button.addEventListener("click", () => {
-  tableBody.innerHTML = "";
-  message.textContent = "Reading attendance...";
+document.getElementById("readBtn").addEventListener("click", () => {
+  const container = document.getElementById("tableContainer");
+  container.textContent = "Fetching attendance data...";
 
-  // Get the current active tab
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const tabId = tabs[0].id;
 
-    // Send message to content script
-    chrome.tabs.sendMessage(tabId, { type: "READ_ATTENDANCE" }, (response) => {
-      if (chrome.runtime.lastError) {
-        // Handle case where content script isn't loaded
-        message.textContent = "Error: Could not access page content. Make sure you are on the campus page.";
-        console.error(chrome.runtime.lastError);
-        return;
+    chrome.scripting.executeScript(
+      {
+        target: { tabId: tabId },
+        func: () => {
+          const table = document.querySelector("table");
+          if (!table) return null;
+
+          const rows = Array.from(table.querySelectorAll("tbody tr"));
+          return rows.map((tr) => {
+            const cells = tr.querySelectorAll("td");
+            return {
+              date: cells[0]?.innerText.trim(),
+              campus: cells[1]?.innerText.trim(),
+              trainer: cells[2]?.innerText.trim(),
+              course: cells[3]?.innerText.trim(),
+              slot: cells[4]?.innerText.trim(),
+              gender: cells[5]?.innerText.trim(),
+              total: cells[6]?.innerText.trim(),
+              present: cells[7]?.innerText.trim(),
+              leave: cells[8]?.innerText.trim(),
+              absent: cells[9]?.innerText.trim(),
+              percentage: cells[10]?.innerText.trim()
+            };
+          });
+        }
+      },
+      (results) => {
+        if (!results || !results[0].result || results[0].result.length === 0) {
+          container.textContent =
+            "Error: Could not access page content. Make sure you are on the campus page.";
+          return;
+        }
+
+        latestData = results[0].result; // save data for copying
+
+        // Build HTML table
+        let html = '<table><thead><tr>';
+        const headers = ["Date", "Campus", "Trainer", "Course", "Slot", "Gender", "Total", "Present", "Leave", "Absent", "%"];
+        headers.forEach(h => html += `<th>${h}</th>`);
+        html += '</tr></thead><tbody>';
+
+        latestData.forEach(item => {
+          html += '<tr>';
+          headers.forEach(h => {
+            const key = h.toLowerCase();
+            html += `<td>${item[key] || ""}</td>`;
+          });
+          html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
       }
-
-      const data = response?.data || [];
-      if (data.length === 0) {
-        message.textContent = "No attendance data found.";
-        return;
-      }
-
-      message.textContent = `Found ${data.length} records.`;
-
-      // Populate table
-      data.forEach((row) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.date}</td>
-          <td>${row.campus}</td>
-          <td>${row.trainer}</td>
-          <td>${row.course}</td>
-          <td>${row.slot}</td>
-          <td>${row.gender}</td>
-          <td>${row.totalStudents}</td>
-          <td>${row.present}</td>
-          <td>${row.leave}</td>
-          <td>${row.absent}</td>
-          <td>${row.attendancePercentage}</td>
-        `;
-        tableBody.appendChild(tr);
-      });
-    });
+    );
   });
+});
+
+// Copy to clipboard function
+document.getElementById("copyBtn").addEventListener("click", () => {
+  if (!latestData || latestData.length === 0) {
+    alert("No data to copy. Please click 'Read Attendance' first.");
+    return;
+  }
+
+  const headers = ["Date", "Campus", "Trainer", "Course", "Slot", "Gender", "Total", "Present", "Leave", "Absent", "%"];
+  let tsv = headers.join("\t") + "\n";
+
+  latestData.forEach(item => {
+    const row = headers.map(h => item[h.toLowerCase()] || "").join("\t");
+    tsv += row + "\n";
+  });
+
+  navigator.clipboard.writeText(tsv)
+    .then(() => alert("Attendance data copied! You can now paste it in Excel."))
+    .catch(err => alert("Failed to copy: " + err));
 });

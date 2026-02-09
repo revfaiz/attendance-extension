@@ -1,38 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>Attendance Reader</title>
   <style>
-    body { font-family: Arial, sans-serif; width: 400px; padding: 10px; }
-    button { padding: 10px 20px; margin-bottom: 10px; cursor: pointer; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 5px; text-align: left; font-size: 12px; }
-    th { background-color: #f0f0f0; }
-    .message { font-size: 14px; margin-top: 10px; }
+    body { font-family: Arial; width: 600px; padding: 10px; }
+    button { padding: 10px 20px; margin: 5px 5px 10px 0; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
+    th { background: #f2f2f2; }
+    tbody { max-height: 300px; overflow-y: auto; display: block; }
+    tbody tr { display: table; width: 100%; table-layout: fixed; }
+    thead, tbody tr { display: table; width: 100%; table-layout: fixed; }
   </style>
 </head>
 <body>
-  <button id="readAttendance">Read Attendance</button>
-  <div class="message" id="message"></div>
-  <table id="attendanceTable">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Campus</th>
-        <th>Trainer</th>
-        <th>Course</th>
-        <th>Slot</th>
-        <th>Gender</th>
-        <th>Total</th>
-        <th>Present</th>
-        <th>Leave</th>
-        <th>Absent</th>
-        <th>%</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <h3>Saylani Attendance</h3>
+  <button id="readBtn">Read Attendance</button>
+  <button id="copyBtn">Copy to Clipboard</button>
+  <div id="tableContainer">Click "Read Attendance" to fetch data.</div>
 
   <script src="popup.js"></script>
 </body>
