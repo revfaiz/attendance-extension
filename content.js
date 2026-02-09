@@ -1,65 +1,52 @@
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "READ_ATTENDANCE") {
-    const data = extractAttendance();
-    sendResponse({ data });
-  }
-});
+console.log("Attendance Reader running on:", document.title);
 
-/**
- * Main extraction function
- */
 function extractAttendance() {
-  let results = [];
+  const results = [];
 
-  // 1️⃣ Try TABLE-BASED layout
-  const tables = document.querySelectorAll("table");
+  // Ant Design table rows
+  const rows = document.querySelectorAll("table tbody tr");
 
-  tables.forEach((table) => {
-    const rows = table.querySelectorAll("tr");
+  rows.forEach(row => {
+    const cells = row.querySelectorAll("td");
+    if (cells.length < 10) return; // safety check
 
-    rows.forEach((row) => {
-      const cells = row.querySelectorAll("td");
+    const date = cells[0].innerText.trim();
+    const campus = cells[1].innerText.trim();
+    const trainer = cells[2].innerText.trim();
+    const course = cells[3].innerText.trim();
+    const slot = cells[4].innerText.trim();
+    const gender = cells[5].innerText.trim();
 
-      if (cells.length >= 2) {
-        const className = cells[0].innerText.trim();
-        const attendance = cells[1].innerText.trim();
+    const total = Number(cells[6].innerText.trim());
+    const present = Number(cells[7].innerText.trim());
+    const leave = Number(cells[8].innerText.trim());
+    const absent = Number(cells[9].innerText.trim());
 
-        if (looksLikeAttendance(attendance)) {
-          results.push({ className, attendance });
-        }
-      }
+    const percentage =
+      total > 0 ? ((present / total) * 100).toFixed(1) + "%" : "0%";
+
+    results.push({
+      date,
+      campus,
+      trainer,
+      course,
+      slot,
+      gender,
+      totalStudents: total,
+      present,
+      leave,
+      absent,
+      attendancePercentage: percentage
     });
   });
-
-  // 2️⃣ If nothing found, try CARD / DIV layout
-  if (results.length === 0) {
-    const cards = document.querySelectorAll("div");
-
-    cards.forEach((card) => {
-      const text = card.innerText;
-
-      if (!text) return;
-
-      // Example patterns: "Attendance: 85%" or "Attendance - 12/15"
-      const attendanceMatch = text.match(
-        /(attendance[:\s-]+)(\d+%|\d+\/\d+)/i
-      );
-
-      if (attendanceMatch) {
-        const attendance = attendanceMatch[2];
-        const className = text.split("\n")[0].trim();
-
-        results.push({ className, attendance });
-      }
-    });
-  }
 
   return results;
 }
 
-/**
- * Simple helper to detect attendance-like values
- */
-function looksLikeAttendance(text) {
-  return /\d+%|\d+\/\d+/.test(text);
-}
+// Message listener from popup
+chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
+  if (req.type === "READ_ATTENDANCE") {
+    const data = extractAttendance();
+    sendResponse({ data });
+  }
+});
