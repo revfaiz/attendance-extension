@@ -10,7 +10,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://admin.saylanimit.com/view-attendance*"],
+      "matches": ["https://admin.saylanimit.com/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

@@ -1,4 +1,3 @@
-// content.js
 console.log("Attendance content script loaded");
 
 function waitForTable(selector, timeout = 5000) {
@@ -41,10 +40,9 @@ async function getAttendanceData() {
   return data;
 }
 
-// Listen for popup requests
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "readAttendance") {
     getAttendanceData().then((data) => sendResponse({ data }));
-    return true; // keeps the message channel open for async response
+    return true;
   }
 });
