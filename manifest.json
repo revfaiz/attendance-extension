@@ -3,10 +3,28 @@
   "name": "Saylani Attendance Reader",
   "version": "1.0",
   "description": "Read attendance data from Saylani campus pages.",
-  "permissions": ["scripting", "activeTab"],
+  "permissions": [
+    "scripting",
+    "activeTab",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "https://admin.saylanimit.com/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_title": "Read Attendance"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "read-attendance": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E"
+      },
+      "description": "Read attendance from current page"
+    }
   },
   "content_scripts": [
     {
